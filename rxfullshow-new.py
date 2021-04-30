@@ -183,8 +183,12 @@ if mode == 'Regular':
 else:
         pass
 
-conn = pymysql.connect(host='localhost',port=3307,db='akatsukistat',
-                       user='Murmurtwins',passwd='1Q2w3e4rchaju320',charset='utf8')
+# Modify this part to fit for your configurations in MySQL
+#----------------------------------------------------------------------------
+conn = pymysql.connect(host='localhost',port=3307,db='name_of_database',
+                       user='mysql_username',passwd='',charset='utf8')
+#----------------------------------------------------------------------------
+
 cursor=conn.cursor()
 sql1 = "SELECT * FROM akatsukistat.player_stat WHERE user_id = %s AND rx_state = %s"
 cursor.execute(sql1,(ID,var))
