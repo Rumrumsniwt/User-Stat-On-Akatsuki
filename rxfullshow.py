@@ -3,21 +3,36 @@
 # Display users information on Akatsuki
 # Author: Murmurtwins
 
-from PIL import Image,ImageDraw,ImageFont,ImageFilter
+from PIL import Image,ImageDraw,ImageFont
 from io import BytesIO
-import requests, json, time, math
+import requests, json, time
+import pymysql
+
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+headers = {'Connection': 'close','Accept':'application/json'}
+
+config = {
+    "host":"x.x.x.x",
+    "user":"root",
+    "password":"your_password",
+    "database":"your_database",
+    "charset":"utf8",
+    "port":3307
+    }
 
 ID=int(input('Your ID? (An integer):')) # 输入ID
 mode=input('Relax or Regular?:')
 url='https://akatsuki.pw/api/v1/users/full?id='+str(ID)
 url2='https://a.akatsuki.pw/'+str(ID)
-r=requests.get(url)
+r=requests.get(url, timeout=50)
 result=json.loads(r.text)
 username=result['username']
 country=result['country']
 
-#url3='https://www.countryflags.io/'+country+'/shiny/64.png'
-#url3='https://flagcdn.com/w40/'+country+'.png'
+# url3='https://www.countryflags.io/'+country+'/shiny/64.png'
+# url3='https://flagcdn.com/w40/'+country+'.png'
 
 if mode == 'Relax':
         var=1
@@ -31,7 +46,7 @@ rankedscore=result['stats'][var]['std']['ranked_score']
 acc=result['stats'][var]['std']['accuracy']
 pc=result['stats'][var]['std']['playcount']
 replay=result['stats'][var]['std']['replays_watched']
-level=result['stats'][var]['std']['level']
+level=round(result['stats'][var]['std']['level'],5)
 level_int=int(level)
 level_res=100*(level-level_int)
 
@@ -49,13 +64,12 @@ count=0
 bpk=0
 realscore=0
 inf=''
-for page in range(1,300):
+for page in range(1,700):
         pagestr=str(page)
         print('Now we are at page:',page)
         url5='&l=100&rx='+str(var)+'&id='+str(ID)
         fullurl=url4+pagestr+url5
-#        time.sleep(10)
-        r2=requests.get(fullurl)
+        r2=requests.get(fullurl, headers = headers, verify = False)
         result2=json.loads(r2.text)
         try:
                 for item in range(0,100):
@@ -88,21 +102,23 @@ for page in range(1,300):
                              count=(page-1)*100+item
                              if count<1000:
                                   inf='/'
-                             break;
+                             break
         except TypeError:
-                break;
+                break
 
 image=Image.new('RGB',(953,462),(255,255,255))
 font1=ImageFont.truetype('ARLRDBD.ttf',48)
 font11=ImageFont.truetype('ARLRDBD.ttf',36)
 font12=ImageFont.truetype('ARLRDBD.ttf',30)
-font2=ImageFont.truetype('GOTHIC.ttf',48)
-font21=ImageFont.truetype('GOTHIC.ttf',36)
-font22=ImageFont.truetype('GOTHIC.ttf',24)
-font23=ImageFont.truetype('GOTHIC.ttf',38)
-font24=ImageFont.truetype('GOTHIC.ttf',30)
-font3=ImageFont.truetype('seguihis.ttf',48)
-font31=ImageFont.truetype('seguihis.ttf',17)
+font2=ImageFont.truetype('Torus Regular.otf',48)
+font21=ImageFont.truetype('Torus Regular.otf',36)
+font22=ImageFont.truetype('Torus Regular.otf',24)
+font23=ImageFont.truetype('Torus Regular.otf',38)
+font24=ImageFont.truetype('Torus Regular.otf',30)
+font25=ImageFont.truetype('Torus Regular.otf',20)
+font3=ImageFont.truetype('Torus SemiBold.otf',48)
+font31=ImageFont.truetype('Torus SemiBold.otf',17)
+font32=ImageFont.truetype('Torus SemiBold.otf',30)
 font4=ImageFont.truetype('inkfree.ttf',30)
 imgtemp=Image.open("template2.png")
 image.paste(imgtemp,(0,0))
@@ -125,19 +141,19 @@ draw.text((298,417),'S',font=font12,fill=(210,105,30))
 draw.text((458,417),'S',font=font12,fill=(210,105,30))
 draw.text((623,417),'A',font=font12,fill=(0,255,0))
 
-draw.text((341,415),format(SS+SSH,','),font=font24,fill=(255,255,255))
-draw.text((506,415),format(S+SH,','),font=font24,fill=(255,255,255))
+total_ss=SS+SSH
+total_s=S+SH
+
+draw.text((341,415),format(total_ss,','),font=font24,fill=(255,255,255))
+draw.text((506,415),format(total_s,','),font=font24,fill=(255,255,255))
 draw.text((671,415),format(A,','),font=font24,fill=(255,255,255))
 
-if count>=30000:
-        draw.text((671,269),format(count,','),font=font24,fill=(255,255,0))
+if count>=66666:
+        draw.text((671,269),format(count,','),font=font32,fill=(255,255,255))
 else:
         draw.text((671,269),format(count,','),font=font24,fill=(255,255,255))
 
-if upp>=8500000:
-        draw.text((656,317),format(upp,'0,.2f'),font=font24,fill=(255,255,0))
-else:
-        draw.text((656,317),format(upp,'0,.2f'),font=font24,fill=(255,255,255))
+draw.text((656,317),format(upp,'0,.2f'),font=font24,fill=(255,255,255))
 
 if count<1000:
         draw.text((641,364),inf,font=font24,fill=(255,255,255))
@@ -146,13 +162,24 @@ else:
 
 draw.text((360,174),format(rankedscore,','),font=font24,fill=(255,255,255))
 draw.text((346,222),format(acc,'0.2f')+'%',font=font24,fill=(255,255,255))
-draw.text((332,269),format(pc,','),font=font24,fill=(255,255,255))
-draw.text((316,318),format(replay,','),font=font24,fill=(255,255,255))
-draw.text((302,367),str(level_int)+' ('+str(format(level_res,'0.3f'))+'%)',font=font24,fill=(255,255,255))
-t1=time.strftime("%y-%m-%d %H:%M:%S",time.localtime())
-draw.text((804,430),t1,font=font31,fill=(255,0,0))
 
-response=requests.get(url2)
+if pc>=150000:
+        draw.text((332,269),format(pc,','),font=font32,fill=(255,255,255))
+else:
+        draw.text((332,269),format(pc,','),font=font24,fill=(255,255,255))
+
+draw.text((316,318),format(replay,','),font=font24,fill=(255,255,255))
+
+if level>=99:
+        draw.text((302,367),str(level_int)+' ('+str(format(level_res,'0.3f'))+'%)',font=font32,fill=(255,255,255))
+else:
+        draw.text((302,367),str(level_int)+' ('+str(format(level_res,'0.3f'))+'%)',font=font24,fill=(255,255,255))
+
+t1=time.time()
+t2=time.strftime("%y-%m-%d %H:%M:%S",time.localtime())
+draw.text((804,432),t2,font=font31,fill=(255,0,0))
+
+response=requests.get(url2, timeout=50)
 #response2=requests.get(url3)
 response=response.content
 #response2=response2.content
@@ -172,5 +199,183 @@ if mode == 'Regular':
 else:
         pass
 
+conn = pymysql.connect(**config)
+cursor=conn.cursor()
+sql1 = "SELECT * FROM akatsukistat.player_stat WHERE user_id = %s AND rx_state = %s"
+cursor.execute(sql1,(ID,var))
+result_old=cursor.fetchone()
+try:
+    old_globalrank=result_old[3]
+    old_countryrank=result_old[4]
+    old_pp=result_old[5]
+    old_rankedscore=result_old[6]
+    old_acc=result_old[7]
+    old_pc=result_old[8]
+    old_replay=result_old[9]
+    old_level=round(result_old[10],5)
+    old_count=result_old[11]
+    old_upp=round(result_old[12],2)
+    old_bpk=result_old[13]
+    old_ss=result_old[14]
+    old_s=result_old[15]
+    old_a=result_old[16]
+    old_time=result_old[17]
+except TypeError:
+        old_globalrank = 0
+        old_countryrank = 0
+        old_pp = 0
+        old_rankedscore = 0
+        old_acc = 0
+        old_pc = 0
+        old_replay = 0
+        old_level = 0
+        old_count = 0
+        old_upp = 0
+        old_bpk = 0
+        old_ss = 0
+        old_s = 0
+        old_a = 0
+        old_time = 0
+
+sql2 = "DELETE FROM akatsukistat.player_stat WHERE user_id = %s AND rx_state = %s"
+cursor.execute(sql2,(ID,var))
+sql3 = "INSERT INTO akatsukistat.player_stat(username,user_id,rx_state,world_rank,country_rank,pp,ranked_score,hit_accuracy,playcount,replays,current_level,score_count,unweightedpp,bponek,ss_count,s_count,a_count,time) value(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+cursor.execute(sql3,(username,ID,var,globalrank,countryrank,pp,rankedscore,acc,pc,replay,level,count,round(upp,2),bpk,total_ss,total_s,A,t1))
+conn.commit()
+
+try:
+        diff_globalrank=globalrank-old_globalrank
+except TypeError:
+        diff_globalrank=0
+
+try:
+        diff_countryrank=countryrank-old_countryrank
+except TypeError:
+        diff_countryrank=0
+
+diff_pp=pp-old_pp
+diff_rankedscore=rankedscore-old_rankedscore
+diff_acc=round(acc,2)-round(old_acc,2)
+diff_pc=pc-old_pc
+diff_replay=replay-old_replay
+diff_level=round(level,5)-round(old_level,5)
+diff_count=count-old_count
+diff_upp=round(upp,2)-round(old_upp,2)
+diff_bpk=round(bpk,2)-round(old_bpk,2)
+diff_ss=total_ss-old_ss
+diff_s=total_s-old_s
+diff_a=A-old_a
+diff_t1=t1-old_time
+
+conn.close()
+
+if diff_globalrank>0:
+        draw.text((534,59), '-' + format(diff_globalrank,','), font=font25, fill=(255, 0, 0))
+if diff_globalrank<0:
+        draw.text((534,59), '+' + format(-diff_globalrank,','), font=font25, fill=(0, 255, 0))
+if diff_globalrank==0:
+        draw.text((534,59), '=', font=font25, fill=(255, 255, 0))
+
+if diff_countryrank>0:
+        draw.text((764,59), '-' + format(diff_countryrank,','), font=font25, fill=(255, 0, 0))
+if diff_countryrank<0:
+        draw.text((764,59), '+' + format(-diff_countryrank,','), font=font25, fill=(0, 255, 0))
+if diff_countryrank==0:
+        draw.text((764,59), '=', font=font25, fill=(255, 255, 0))
+
+if diff_pp>0:
+        draw.text((608,131), '+' + format(diff_pp,','), font=font25, fill=(0, 255, 0))
+if diff_pp<0:
+        draw.text((608,131), '-' + format(-diff_pp,','), font=font25, fill=(255, 0, 0))
+if diff_pp==0:
+        draw.text((608,131), '=', font=font25, fill=(255, 255, 0))
+
+if diff_rankedscore>0:
+        draw.text((600,179), '+' + format(diff_rankedscore,','), font=font25, fill=(0, 255, 0))
+if diff_rankedscore<0:
+        draw.text((600,179), '-' + format(-diff_rankedscore,','), font=font25, fill=(255, 0, 0))
+if diff_rankedscore==0:
+        draw.text((600,179), '=', font=font25, fill=(255, 255, 0))
+
+if diff_acc>0:
+        draw.text((514,227), '+' + format(diff_acc,'0.2f') + '%', font=font25, fill=(0, 255, 0))
+if diff_acc<0:
+        draw.text((514,227), '-' + format(-diff_acc,'0.2f') + '%', font=font25, fill=(255, 0, 0))
+if diff_acc==0:
+        draw.text((514,227), '=', font=font25, fill=(255, 255, 0))
+
+if diff_pc>0:
+        draw.text((430,252), '+' + format(diff_pc,','), font=font25, fill=(0, 255, 0))
+if diff_pc<0:
+        draw.text((430,252), '-' + format(-diff_pc,','), font=font25, fill=(255, 0, 0))
+if diff_pc==0:
+        draw.text((430,252), '=', font=font25, fill=(255, 255, 0))
+
+if diff_replay>0:
+        draw.text((406,300), '+' + format(diff_replay,','), font=font25, fill=(0, 255, 0))
+if diff_replay<0:
+        draw.text((406,300), '-' + format(-diff_replay,','), font=font25, fill=(255, 0, 0))
+if diff_replay==0:
+        draw.text((406,300), '=', font=font25, fill=(255, 255, 0))
+
+if diff_level>0:
+        draw.text((386,349), '+' + format(diff_level*100,'0.3f') + '%', font=font25, fill=(0, 255, 0))
+if diff_level<0:
+        draw.text((386,349), '-' + format(-diff_level*100,'0.3f') + '%', font=font25, fill=(255, 0, 0))
+if abs(diff_level)==0:
+        draw.text((386,349), '=', font=font25, fill=(255, 255, 0))
+
+if diff_count>0:
+        draw.text((810,277), '+' + format(diff_count,','), font=font25, fill=(0, 255, 0))
+if diff_count<0:
+        draw.text((810,277), '-' + format(-diff_count,','), font=font25, fill=(255, 0, 0))
+if diff_count==0:
+        draw.text((810,277), '=', font=font25, fill=(255, 255, 0))
+
+if diff_upp>0:
+        draw.text((749,349), '+' + format(diff_upp,'0,.2f'), font=font25, fill=(0, 255, 0))
+if diff_upp<0:
+        draw.text((749,349), '-' + format(-diff_upp,'0,.2f'), font=font25, fill=(255, 0, 0))
+if diff_upp==0:
+        draw.text((749,349), '=', font=font25, fill=(255, 255, 0))
+
+if diff_bpk>0:
+        draw.text((790,370), '+' + format(diff_bpk,'0.2f'), font=font25, fill=(0, 255, 0))
+if diff_bpk<0:
+        draw.text((790,370), '-' + format(-diff_bpk,'0.2f'), font=font25, fill=(255, 0, 0))
+if diff_bpk==0:
+        draw.text((790,370), '=', font=font25, fill=(255, 255, 0))
+
+if diff_ss>0:
+        draw.text((350,396), '+' + format(diff_ss,','), font=font25, fill=(0, 255, 0))
+if diff_ss<0:
+        draw.text((350,396), '-' + format(-diff_ss,','), font=font25, fill=(255, 0, 0))
+if diff_ss==0:
+        draw.text((350,396), '=', font=font25, fill=(255, 255, 0))
+
+if diff_s>0:
+        draw.text((519,396), '+' + format(diff_s,','), font=font25, fill=(0, 255, 0))
+if diff_s<0:
+        draw.text((519,396), '-' + format(-diff_s,','), font=font25, fill=(255, 0, 0))
+if diff_s==0:
+        draw.text((519,396), '=', font=font25, fill=(255, 255, 0))
+
+if diff_a>0:
+        draw.text((686,396), '+' + format(diff_a,','), font=font25, fill=(0, 255, 0))
+if diff_a<0:
+        draw.text((686,396), '-' + format(-diff_a,','), font=font25, fill=(255, 0, 0))
+if diff_a==0:
+        draw.text((686,396), '=', font=font25, fill=(255, 255, 0))
+
+if diff_t1<=60:
+        draw.text((690,154), '(compared with ' +str(int(diff_t1))+ 's ago)', font=font25, fill=(255, 0, 0))
+if 60<diff_t1<=3600:
+        draw.text((690,154), '(compared with ' +str(int(int(diff_t1)/60)) + 'min ago)', font=font25, fill=(255, 0, 0))
+if 3600<diff_t1<=86400:
+        draw.text((690,154), '(compared with ' +str(int(int(diff_t1)/3600)) + 'h ago)', font=font25, fill=(255, 0, 0))
+if 86400<diff_t1<=172800:
+        draw.text((690,154), '(compared with ' +str(int(int(diff_t1)/86400)) + 'day ago)', font=font25, fill=(255, 0, 0))
+if diff_t1>172800:
+        draw.text((690,154), '(compared with ' +str(int(int(diff_t1)/86400)) + 'days ago)', font=font25, fill=(255, 0, 0))
 image.save('result.png','PNG')
 image.show()
